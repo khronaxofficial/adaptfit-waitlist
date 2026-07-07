@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AdaptFit — One Bag. Any Gear. Any Shape.</title>
+<meta name="description" content="AdaptFit adapts to your gear instead of forcing your gear to adapt to the bag. Join the waitlist and help shape the first product.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void: #0a0a0c;
+    --void-2: #0e0f13;
+    --graphite: #15161b;
+    --graphite-2: #1b1c22;
+    --hairline: #26282f;
+    --hairline-soft: #1d1e24;
+    --bone: #eceef1;
+    --bone-dim: #c7c9cf;
+    --slate: #8b8f9a;
+    --slate-dim: #5c5f68;
+    --blue: #3e6bff;
+    --blue-bright: #6f8dff;
+    --blue-dim: #1f3384;
+    --blue-glow: rgba(62,107,255,0.35);
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --ease: cubic-bezier(.16,.84,.44,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--void);
+    color:var(--bone);
+    font-family:'Inter',sans-serif;
+    line-height:1.5;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--blue); color:#fff;}
+  a{color:inherit; text-decoration:none;}
+  ul{list-style:none;}
+  button{font-family:inherit; cursor:pointer; border:none; background:none; color:inherit;}
+  img,canvas{display:block; max-width:100%;}
+  .mono{font-family:'JetBrains Mono', monospace;}
+  .display{font-family:'Space Grotesk', sans-serif;}
+
+  .wrap{max-width:1180px; margin:0 auto; padding:0 28px;}
+  section{position:relative; padding:140px 0;}
+  @media (max-width:768px){ section{padding:88px 0;} }
+
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--blue-bright);
+    margin-bottom:20px;
+  }
+  .eyebrow::before{
+    content:''; width:6px; height:6px; border-radius:50%;
+    background:var(--blue); box-shadow:0 0 12px var(--blue-glow);
+  }
+
+  h1,h2,h3{font-family:'Space Grotesk', sans-serif; font-weight:600; letter-spacing:-0.02em;}
+  .section-title{font-size:clamp(28px,4vw,44px); line-height:1.12; max-width:680px;}
+  .section-sub{color:var(--slate); font-size:17px; max-width:520px; margin-top:16px;}
+
+  /* ---------- Loader ---------- */
+  #loader{
+    position:fixed; inset:0; z-index:9999; background:var(--void);
+    display:flex; align-items:center; justify-content:center;
+    transition:opacity .7s var(--ease), visibility .7s var(--ease);
+  }
+  #loader.hide{opacity:0; visibility:hidden;}
+  .loader-mark{
+    width:34px; height:34px; position:relative;
+  }
+  .loader-mark span{
+    position:absolute; width:6px; height:6px; border-radius:50%;
+    background:var(--blue); animation:loaderPulse 1.1s ease-in-out infinite;
+  }
+  .loader-mark span:nth-child(1){top:0; left:14px; animation-delay:0s;}
+  .loader-mark span:nth-child(2){top:14px; left:28px; animation-delay:.12s;}
+  .loader-mark span:nth-child(3){top:28px; left:14px; animation-delay:.24s;}
+  .loader-mark span:nth-child(4){top:14px; left:0; animation-delay:.36s;}
+  @keyframes loaderPulse{
+    0%,100%{transform:scale(0.6); opacity:.4;}
+    50%{transform:scale(1.15); opacity:1; box-shadow:0 0 14px var(--blue-glow);}
+  }
+
+  /* ---------- Scroll progress ---------- */
+  #progress{
+    position:fixed; top:0; left:0; height:2px; background:var(--blue);
+    width:0%; z-index:1000; box-shadow:0 0 10px var(--blue-glow);
+    transition:width .1s linear;
+  }
+
+  /* ---------- Mouse glow ---------- */
+  #glow{
+    position:fixed; width:520px; height:520px; border-radius:50%;
+    pointer-events:none; z-index:1;
+    background:radial-gradient(circle, var(--blue-glow) 0%, transparent 70%);
+    transform:translate(-50%,-50%);
+    opacity:0; transition:opacity .4s ease;
+    filter:blur(10px);
+  }
+
+  /* ---------- Nav ---------- */
+  header{
+    position:fixed; top:0; left:0; right:0; z-index:500;
+    padding:18px 0;
+    transition:background .3s ease, border-color .3s ease, backdrop-filter .3s ease;
+    border-bottom:1px solid transparent;
+  }
+  header.scrolled{
+    background:rgba(10,10,12,0.72);
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--hairline-soft);
+  }
+  nav{display:flex; align-items:center; justify-content:space-between;}
+  .logo{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:19px; letter-spacing:-0.01em; display:flex; align-items:center; gap:8px;}
+  .logo .dot{width:7px; height:7px; border-radius:50%; background:var(--blue); box-shadow:0 0 10px var(--blue-glow);}
+  .nav-links{display:flex; align-items:center; gap:36px;}
+  .nav-links a{font-size:14.5px; color:var(--slate); transition:color .2s ease;}
+  .nav-links a:hover{color:var(--bone);}
+  .nav-cta{
+    padding:10px 20px; border-radius:100px; background:var(--bone); color:var(--void);
+    font-size:14px; font-weight:600; transition:transform .25s var(--ease), box-shadow .25s var(--ease);
+    display:inline-block;
+  }
+  .nav-cta:hover{transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  .nav-toggle{display:none;}
+  @media (max-width:860px){
+    .nav-links{display:none;}
+    .nav-toggle{display:block; font-size:22px;}
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:14px 26px; border-radius:100px; font-size:15px; font-weight:600;
+    transition:transform .3s var(--ease), box-shadow .3s var(--ease), background .3s ease;
+    position:relative; overflow:hidden;
+  }
+  .btn-primary{background:var(--blue); color:#fff;}
+  .btn-primary:hover{transform:translateY(-2px); box-shadow:0 10px 30px var(--blue-glow);}
+  .btn-ghost{background:transparent; color:var(--bone); border:1px solid var(--hairline);}
+  .btn-ghost:hover{border-color:var(--slate-dim); background:rgba(255,255,255,0.03); transform:translateY(-2px);}
+  .btn:active{transform:translateY(0);}
+
+  /* ---------- Hero ---------- */
+  .hero{
+    min-height:100vh; display:flex; align-items:center; padding-top:120px;
+    position:relative; overflow:hidden;
+  }
+  #pinCanvas{position:absolute; inset:0; width:100%; height:100%; z-index:0; opacity:.9;}
+  .hero-inner{position:relative; z-index:2; text-align:center; width:100%;}
+  .hero h1{
+    font-size:clamp(44px,8vw,96px); line-height:1.02; letter-spacing:-0.03em;
+  }
+  .hero h1 .line{display:block; opacity:0; transform:translateY(30px); animation:lineIn .9s var(--ease) forwards;}
+  .hero h1 .line:nth-child(1){animation-delay:.15s;}
+  .hero h1 .line:nth-child(2){animation-delay:.28s; color:var(--slate-dim);}
+  .hero h1 .line:nth-child(3){animation-delay:.41s; background:linear-gradient(90deg,var(--blue-bright),var(--blue)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  @keyframes lineIn{to{opacity:1; transform:translateY(0);}}
+  .hero p{
+    max-width:560px; margin:28px auto 0; color:var(--slate); font-size:18px;
+    opacity:0; animation:fadeUp .9s var(--ease) forwards; animation-delay:.6s;
+  }
+  .hero-actions{display:flex; gap:16px; justify-content:center; margin-top:44px; flex-wrap:wrap;
+    opacity:0; animation:fadeUp .9s var(--ease) forwards; animation-delay:.75s;}
+  @keyframes fadeUp{from{opacity:0; transform:translateY(16px);} to{opacity:1; transform:translateY(0);}}
+
+  .scroll-indicator{
+    position:absolute; bottom:36px; left:50%; transform:translateX(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:10px; z-index:2;
+    opacity:0; animation:fadeUp 1s var(--ease) forwards; animation-delay:1.1s;
+  }
+  .scroll-indicator span{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.15em; color:var(--slate-dim); text-transform:uppercase;}
+  .scroll-line{width:1px; height:34px; background:linear-gradient(var(--slate-dim), transparent); position:relative; overflow:hidden;}
+  .scroll-line::after{content:''; position:absolute; top:-34px; left:0; width:100%; height:34px; background:linear-gradient(var(--blue),transparent); animation:scrollDown 1.8s ease-in-out infinite;}
+  @keyframes scrollDown{0%{top:-34px;} 100%{top:34px;}}
+
+  /* ---------- Reveal ---------- */
+  .reveal{opacity:0; transform:translateY(24px); transition:opacity .8s var(--ease), transform .8s var(--ease);}
+  .reveal.in{opacity:1; transform:translateY(0);}
+  .reveal-delay-1{transition-delay:.08s;}
+  .reveal-delay-2{transition-delay:.16s;}
+  .reveal-delay-3{transition-delay:.24s;}
+  .reveal-delay-4{transition-delay:.32s;}
+
+  /* ---------- Trust bar ---------- */
+  .trust{padding:40px 0; border-top:1px solid var(--hairline-soft); border-bottom:1px solid var(--hairline-soft);}
+  .trust ul{display:flex; flex-wrap:wrap; justify-content:center; gap:40px;}
+  .trust li{font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--slate); letter-spacing:.02em; display:flex; align-items:center; gap:9px;}
+  .trust li b{color:var(--bone); font-weight:500;}
+
+  /* ---------- Problem ---------- */
+  .problem-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--hairline); margin-top:64px; border-radius:var(--radius-md); overflow:hidden;}
+  .problem-card{background:var(--void-2); padding:32px 28px; min-height:150px; display:flex; flex-direction:column; justify-content:space-between;}
+  .problem-card .num{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--slate-dim);}
+  .problem-card p{font-size:16.5px; color:var(--bone-dim); margin-top:20px; max-width:220px;}
+  @media (max-width:860px){ .problem-grid{grid-template-columns:1fr 1fr;} }
+  @media (max-width:560px){ .problem-grid{grid-template-columns:1fr;} }
+
+  .transition-line{
+    text-align:center; margin-top:80px;
+  }
+  .transition-line p{
+    font-family:'Space Grotesk', sans-serif; font-size:clamp(22px,3.4vw,34px);
+    font-weight:600; color:var(--bone); letter-spacing:-0.01em;
+  }
+  .transition-line span{color:var(--blue-bright);}
+
+  /* ---------- Solution ---------- */
+  .solution-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:60px;}
+  .benefit-card{
+    background:var(--graphite); border:1px solid var(--hairline); border-radius:var(--radius-md);
+    padding:30px; transition:transform .35s var(--ease), border-color .35s ease, background .35s ease;
+  }
+  .benefit-card:hover{transform:translateY(-6px); border-color:var(--blue-dim); background:var(--graphite-2);}
+  .benefit-icon{
+    width:42px; height:42px; border-radius:11px; background:rgba(62,107,255,0.12);
+    display:flex; align-items:center; justify-content:center; margin-bottom:20px;
+  }
+  .benefit-icon svg{width:20px; height:20px; stroke:var(--blue-bright);}
+  .benefit-card h3{font-size:17px; font-weight:600; margin-bottom:8px;}
+  .benefit-card p{font-size:14.5px; color:var(--slate);}
+  @media (max-width:860px){ .solution-grid{grid-template-columns:1fr 1fr;} }
+  @media (max-width:560px){ .solution-grid{grid-template-columns:1fr;} }
+
+  /* ---------- Product preview ---------- */
+  .product-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin-top:60px;}
+  .product-card{
+    border-radius:var(--radius-lg); border:1px solid var(--hairline); overflow:hidden;
+    background:linear-gradient(155deg,var(--graphite),var(--void-2));
+    transition:transform .4s var(--ease), border-color .4s ease;
+  }
+  .product-card:hover{transform:translateY(-6px); border-color:var(--blue-dim);}
+  .product-visual{
+    height:220px; position:relative; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 50% 40%, rgba(62,107,255,0.10), transparent 65%);
+    border-bottom:1px solid var(--hairline-soft);
+  }
+  .dot-shape{width:120px; height:90px; position:relative;}
+  .dot-shape i{
+    position:absolute; width:5px; height:5px; border-radius:50%; background:var(--slate-dim);
+  }
+  .product-card:hover .dot-shape i{background:var(--blue-bright); box-shadow:0 0 8px var(--blue-glow);}
+  .product-body{padding:26px 28px 30px;}
+  .badge-soon{
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--slate); border:1px solid var(--hairline); padding:5px 10px; border-radius:100px; display:inline-block; margin-bottom:14px;
+  }
+  .product-body h3{font-size:19px;}
+  .product-body p{color:var(--slate); font-size:14px; margin-top:8px;}
+  @media (max-width:860px){ .product-grid{grid-template-columns:1fr;} }
+
+  /* ---------- Waitlist ---------- */
+  .waitlist-section{background:var(--void-2); border-top:1px solid var(--hairline-soft); border-bottom:1px solid var(--hairline-soft);}
+  .waitlist-inner{display:grid; grid-template-columns:1fr 1fr; gap:70px; align-items:start;}
+  @media (max-width:900px){ .waitlist-inner{grid-template-columns:1fr; gap:44px;} }
+  .waitlist-copy .stat-row{display:flex; gap:32px; margin-top:36px;}
+  .stat-row .stat b{font-family:'Space Grotesk',sans-serif; font-size:30px; display:block;}
+  .stat-row .stat span{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--slate); text-transform:uppercase; letter-spacing:.08em;}
+
+  .form-card{
+    background:var(--graphite); border:1px solid var(--hairline); border-radius:var(--radius-lg); padding:36px;
+  }
+  .field{margin-bottom:18px;}
+  .field label{font-size:13px; color:var(--slate); display:block; margin-bottom:8px;}
+  .field input, .field select, .field textarea{
+    width:100%; background:var(--void); border:1px solid var(--hairline); border-radius:var(--radius-sm);
+    padding:13px 14px; color:var(--bone); font-size:15px; font-family:inherit;
+    transition:border-color .25s ease, box-shadow .25s ease;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(62,107,255,0.15);
+  }
+  .field-check{display:flex; align-items:center; gap:10px; margin:22px 0 26px;}
+  .field-check input{width:17px; height:17px; accent-color:var(--blue);}
+  .field-check label{font-size:14px; color:var(--bone-dim); margin:0;}
+  .form-msg{font-size:13px; margin-top:12px; min-height:18px;}
+  .form-msg.error{color:#ff7a7a;}
+  .form-msg.ok{color:var(--blue-bright);}
+
+  .success-state{
+    display:none; flex-direction:column; align-items:center; text-align:center; padding:30px 10px;
+  }
+  .success-state.show{display:flex;}
+  .success-ring{
+    width:64px; height:64px; border-radius:50%; border:2px solid var(--blue);
+    display:flex; align-items:center; justify-content:center; margin-bottom:20px;
+    animation:ringPop .6s var(--ease);
+  }
+  .success-ring svg{width:26px; height:26px; stroke:var(--blue-bright);}
+  @keyframes ringPop{0%{transform:scale(0.4); opacity:0;} 60%{transform:scale(1.08);} 100%{transform:scale(1); opacity:1;}}
+  .success-state h3{font-size:19px;}
+  .success-state p{color:var(--slate); font-size:14px; margin-top:8px; max-width:300px;}
+
+  /* ---------- Poll ---------- */
+  .poll-card{
+    background:var(--graphite); border:1px solid var(--hairline); border-radius:var(--radius-lg);
+    padding:40px; margin-top:56px;
+  }
+  .poll-q{margin-bottom:34px;}
+  .poll-q:last-of-type{margin-bottom:0;}
+  .poll-q h4{font-size:16px; font-weight:600; margin-bottom:16px;}
+  .poll-options{display:flex; flex-direction:column; gap:10px;}
+  .poll-options.grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  @media (max-width:600px){ .poll-options.grid2{grid-template-columns:1fr;} }
+  .poll-opt{
+    display:flex; align-items:center; gap:12px; padding:13px 16px; border:1px solid var(--hairline);
+    border-radius:var(--radius-sm); cursor:pointer; transition:border-color .2s ease, background .2s ease;
+    font-size:14.5px; color:var(--bone-dim);
+  }
+  .poll-opt:hover{border-color:var(--slate-dim);}
+  .poll-opt input{accent-color:var(--blue);}
+  .poll-opt.checked{border-color:var(--blue); background:rgba(62,107,255,0.08); color:var(--bone);}
+  .poll-q textarea{width:100%; min-height:100px; background:var(--void); border:1px solid var(--hairline); border-radius:var(--radius-sm); padding:14px; color:var(--bone); font-family:inherit; font-size:14.5px; resize:vertical;}
+  .poll-q textarea:focus{outline:none; border-color:var(--blue);}
+
+  /* ---------- Counters ---------- */
+  .counter-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--hairline); border-radius:var(--radius-md); overflow:hidden; margin-top:56px;}
+  .counter-cell{background:var(--void-2); padding:38px 24px; text-align:center;}
+  .counter-cell b{font-family:'Space Grotesk',sans-serif; font-size:clamp(30px,4vw,44px); display:block; color:var(--bone);}
+  .counter-cell span{font-family:'JetBrains Mono',monospace; font-size:11.5px; text-transform:uppercase; letter-spacing:.09em; color:var(--slate); display:block; margin-top:8px;}
+  @media (max-width:760px){ .counter-grid{grid-template-columns:1fr 1fr;} }
+
+  /* ---------- Timeline ---------- */
+  .timeline{margin-top:70px; position:relative; padding-left:6px;}
+  .tl-item{display:grid; grid-template-columns:90px 20px 1fr; gap:0; position:relative; padding-bottom:46px;}
+  .tl-item:last-child{padding-bottom:0;}
+  .tl-year{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--slate); padding-top:2px;}
+  .tl-marker{display:flex; flex-direction:column; align-items:center;}
+  .tl-dot{width:11px; height:11px; border-radius:50%; background:var(--void); border:2px solid var(--hairline); margin-top:2px; transition:border-color .3s ease, background .3s ease;}
+  .tl-item.active .tl-dot{border-color:var(--blue); background:var(--blue); box-shadow:0 0 12px var(--blue-glow);}
+  .tl-line{width:1px; flex:1; background:var(--hairline); margin-top:4px;}
+  .tl-item:last-child .tl-line{display:none;}
+  .tl-content h4{font-size:17px; font-weight:600;}
+  .tl-content p{color:var(--slate); font-size:14px; margin-top:6px; max-width:440px;}
+
+  /* ---------- FAQ ---------- */
+  .faq-item{border-bottom:1px solid var(--hairline-soft);}
+  .faq-q{
+    width:100%; display:flex; justify-content:space-between; align-items:center;
+    padding:26px 0; font-size:17px; font-weight:500; text-align:left; color:var(--bone);
+  }
+  .faq-q .icon{width:16px; height:16px; position:relative; flex-shrink:0; margin-left:20px;}
+  .faq-q .icon::before, .faq-q .icon::after{content:''; position:absolute; background:var(--slate); transition:transform .3s ease;}
+  .faq-q .icon::before{width:100%; height:1.5px; top:50%; left:0; transform:translateY(-50%);}
+  .faq-q .icon::after{height:100%; width:1.5px; left:50%; top:0; transform:translateX(-50%);}
+  .faq-item.open .faq-q .icon::after{transform:translateX(-50%) scaleY(0);}
+  .faq-a{max-height:0; overflow:hidden; transition:max-height .4s var(--ease);}
+  .faq-a p{color:var(--slate); font-size:15px; padding-bottom:24px; max-width:600px;}
+
+  /* ---------- Footer ---------- */
+  footer{padding:70px 0 40px; border-top:1px solid var(--hairline-soft);}
+  .footer-top{display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:30px;}
+  .footer-tag{color:var(--slate); font-size:14px; margin-top:10px; max-width:280px;}
+  .social-list{display:flex; gap:18px;}
+  .social-list a{
+    width:38px; height:38px; border-radius:50%; border:1px solid var(--hairline);
+    display:flex; align-items:center; justify-content:center; transition:border-color .25s ease, transform .25s ease;
+  }
+  .social-list a:hover{border-color:var(--blue); transform:translateY(-3px);}
+  .social-list svg{width:16px; height:16px; stroke:var(--slate);}
+  .footer-bottom{margin-top:56px; padding-top:24px; border-top:1px solid var(--hairline-soft); display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px;}
+  .footer-bottom p{font-size:12.5px; color:var(--slate-dim);}
+
+  ::-webkit-scrollbar{width:9px;}
+  ::-webkit-scrollbar-track{background:var(--void);}
+  ::-webkit-scrollbar-thumb{background:var(--hairline); border-radius:10px;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+</style>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div id="loader"><div class="loader-mark"><span></span><span></span><span></span><span></span></div></div>
+<div id="progress"></div>
+<div id="glow"></div>
+
+<header id="siteHeader">
+  <nav class="wrap">
+    <a href="#top" class="logo"><span class="dot"></span>AdaptFit</a>
+    <div class="nav-links">
+      <a href="#problem">Problem</a>
+      <a href="#solution">Solution</a>
+      <a href="#products">Products</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <a href="#waitlist" class="nav-cta">Join Waitlist</a>
+  </nav>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <canvas id="pinCanvas"></canvas>
+    <div class="wrap hero-inner">
+      <h1>
+        <span class="line">One Bag.</span>
+        <span class="line">Any Gear.</span>
+        <span class="line">Any Shape.</span>
+      </h1>
+      <p>A new way to carry cameras, drones, gimbals, laptops and more — designed to adapt to your gear instead of forcing your gear to adapt to the bag.</p>
+      <div class="hero-actions">
+        <a href="#waitlist" class="btn btn-primary">Join Waitlist</a>
+        <a href="#solution" class="btn btn-ghost">See Prototype Journey</a>
+      </div>
+    </div>
+    <div class="scroll-indicator">
+      <span>Scroll</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- TRUST -->
+  <section class="trust" style="padding:0;">
+    <div class="wrap">
+      <ul>
+        <li>🚀 <b>Startup in Development</b></li>
+        <li>🔒 <b>Patent Pending</b></li>
+        <li>🌎 <b>Building in Public</b></li>
+        <li>👥 <b>Early Access</b></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section id="problem">
+    <div class="wrap">
+      <div class="reveal">
+        <div class="eyebrow">The problem</div>
+        <h2 class="section-title">Today's bags weren't designed for modern creators.</h2>
+      </div>
+      <div class="problem-grid">
+        <div class="problem-card reveal reveal-delay-1">
+          <span class="num mono">01</span>
+          <p>Fixed compartments that only fit one exact device.</p>
+        </div>
+        <div class="problem-card reveal reveal-delay-2">
+          <span class="num mono">02</span>
+          <p>A different bag needed for every piece of gear.</p>
+        </div>
+        <div class="problem-card reveal reveal-delay-3">
+          <span class="num mono">03</span>
+          <p>Bulky foam inserts that you cut once and never reuse.</p>
+        </div>
+        <div class="problem-card reveal reveal-delay-1">
+          <span class="num mono">04</span>
+          <p>Wasted storage around oddly shaped equipment.</p>
+        </div>
+        <div class="problem-card reveal reveal-delay-2">
+          <span class="num mono">05</span>
+          <p>Poor flexibility as your kit grows and changes.</p>
+        </div>
+        <div class="problem-card reveal reveal-delay-3">
+          <span class="num mono">06</span>
+          <p>Buy again, every time your gear changes shape.</p>
+        </div>
+      </div>
+      <div class="transition-line reveal">
+        <p>What if <span>one bag</span> could adapt to everything?</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOLUTION -->
+  <section id="solution">
+    <div class="wrap">
+      <div class="reveal">
+        <div class="eyebrow">The solution</div>
+        <h2 class="section-title">AdaptFit reshapes around whatever you carry.</h2>
+        <p class="section-sub">No mechanism to explain, no manual to read — you place your gear inside, and the bag does the rest.</p>
+      </div>
+      <div class="solution-grid">
+        <div class="benefit-card reveal reveal-delay-1">
+          <div class="benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M3 12a9 9 0 1018 0 9 9 0 00-18 0z"/><path d="M8 12h8M12 8v8"/></svg></div>
+          <h3>Fits different equipment</h3>
+          <p>Cameras, drones, gimbals, laptops and more — one case, endless combinations.</p>
+        </div>
+        <div class="benefit-card reveal reveal-delay-2">
+          <div class="benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 9v11"/></svg></div>
+          <h3>No custom foam needed</h3>
+          <p>Skip the cutting, the leftover scraps, and the trial and error.</p>
+        </div>
+        <div class="benefit-card reveal reveal-delay-3">
+          <div class="benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/></svg></div>
+          <h3>Protects valuable gear</h3>
+          <p>Every item is held snugly in place, cushioned from drops and shifting.</p>
+        </div>
+        <div class="benefit-card reveal reveal-delay-1">
+          <div class="benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M3 7h18M3 12h18M3 17h18"/></svg></div>
+          <h3>Organized storage</h3>
+          <p>Every piece has its place, so you can find and pack gear in seconds.</p>
+        </div>
+        <div class="benefit-card reveal reveal-delay-2">
+          <div class="benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M3 12h18M3 12l5-5M3 12l5 5"/></svg></div>
+          <h3>Travel friendly</h3>
+          <p>One case that adapts on the road, on set, or between projects.</p>
+        </div>
+        <div class="benefit-card reveal reveal-delay-3">
+          <div class="benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="18" r="2"/><path d="M9.5 10.5L6.5 7.5M14.5 10.5l3-3M9.5 13.5l-3 3M14.5 13.5l3 3"/></svg></div>
+          <h3>A growing ecosystem</h3>
+          <p>Built as the first product in a family of adaptive carry gear.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUCT PREVIEW -->
+  <section id="products">
+    <div class="wrap">
+      <div class="reveal">
+        <div class="eyebrow">What's next</div>
+        <h2 class="section-title">One idea, built to travel further.</h2>
+      </div>
+      <div class="product-grid">
+        <div class="product-card reveal reveal-delay-1">
+          <div class="product-visual"><div class="dot-shape" data-shape="case"></div></div>
+          <div class="product-body">
+            <span class="badge-soon">Coming Soon</span>
+            <h3>Adaptive Carry-on</h3>
+            <p>Travel-ready protection for gear on every trip.</p>
+          </div>
+        </div>
+        <div class="product-card reveal reveal-delay-2">
+          <div class="product-visual"><div class="dot-shape" data-shape="pack"></div></div>
+          <div class="product-body">
+            <span class="badge-soon">Coming Soon</span>
+            <h3>Adaptive Backpack</h3>
+            <p>Everyday carry that reshapes around your daily kit.</p>
+          </div>
+        </div>
+        <div class="product-card reveal reveal-delay-3">
+          <div class="product-visual"><div class="dot-shape" data-shape="hard"></div></div>
+          <div class="product-body">
+            <span class="badge-soon">Coming Soon</span>
+            <h3>Adaptive Hard Case</h3>
+            <p>Rugged protection for gear that can't afford a scratch.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WAITLIST -->
+  <section id="waitlist" class="waitlist-section">
+    <div class="wrap waitlist-inner">
+      <div class="waitlist-copy reveal">
+        <div class="eyebrow">Join the waitlist</div>
+        <h2 class="section-title">Be first to try AdaptFit.</h2>
+        <p class="section-sub">Get early access, prototype updates, and a say in what we build next. No spam — just real progress.</p>
+        <div class="stat-row">
+          <div class="stat"><b class="mono" id="statWaitlist">—</b><span>On the waitlist</span></div>
+          <div class="stat"><b class="mono" id="statCountries">—</b><span>Countries</span></div>
+        </div>
+      </div>
+
+      <div class="form-card reveal reveal-delay-1">
+        <form id="waitlistForm">
+          <div class="field">
+            <label for="wf-name">Name</label>
+            <input id="wf-name" name="name" type="text" placeholder="Your name" required>
+          </div>
+          <div class="field">
+            <label for="wf-email">Email</label>
+            <input id="wf-email" name="email" type="email" placeholder="you@email.com" required>
+          </div>
+          <div class="field">
+            <label for="wf-country">Country</label>
+            <input id="wf-country" name="country" type="text" placeholder="e.g. India" required>
+          </div>
+          <div class="field">
+            <label for="wf-profession">Profession</label>
+            <input id="wf-profession" name="profession" type="text" placeholder="e.g. Photographer, Drone pilot, Editor">
+          </div>
+          <div class="field-check">
+            <input type="checkbox" id="wf-test" name="testInterest">
+            <label for="wf-test">I'd love to test the prototype</label>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Join Waitlist</button>
+          <div class="form-msg" id="wfMsg"></div>
+        </form>
+        <div class="success-state" id="wfSuccess">
+          <div class="success-ring"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg></div>
+          <h3>You're on the list.</h3>
+          <p>We'll email you as prototypes and early access spots open up.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- POLL -->
+  <section id="poll">
+    <div class="wrap">
+      <div class="reveal">
+        <div class="eyebrow">Shape the product</div>
+        <h2 class="section-title">Help build AdaptFit.</h2>
+        <p class="section-sub">Four quick questions. Your answers directly influence pricing, sizing and what we prototype next.</p>
+      </div>
+
+      <div class="poll-card reveal reveal-delay-1">
+        <form id="pollForm">
+          <div class="poll-q">
+            <h4>If AdaptFit launched today...</h4>
+            <div class="poll-options" data-group="intent">
+              <label class="poll-opt"><input type="radio" name="intent" value="I'd preorder immediately"> I'd preorder immediately</label>
+              <label class="poll-opt"><input type="radio" name="intent" value="I want to see the prototype first"> I want to see the prototype first</label>
+              <label class="poll-opt"><input type="radio" name="intent" value="Depends on the price"> Depends on the price</label>
+              <label class="poll-opt"><input type="radio" name="intent" value="Not interested"> Not interested</label>
+            </div>
+          </div>
+
+          <div class="poll-q">
+            <h4>What do you usually carry?</h4>
+            <div class="poll-options grid2" data-group="carry">
+              <label class="poll-opt"><input type="checkbox" name="carry" value="Camera"> Camera</label>
+              <label class="poll-opt"><input type="checkbox" name="carry" value="Drone"> Drone</label>
+              <label class="poll-opt"><input type="checkbox" name="carry" value="Laptop"> Laptop</label>
+              <label class="poll-opt"><input type="checkbox" name="carry" value="Gimbal"> Gimbal</label>
+              <label class="poll-opt"><input type="checkbox" name="carry" value="Medical Equipment"> Medical Equipment</label>
+              <label class="poll-opt"><input type="checkbox" name="carry" value="Audio Equipment"> Audio Equipment</label>
+              <label class="poll-opt"><input type="checkbox" name="carry" value="Other"> Other</label>
+            </div>
+          </div>
+
+          <div class="poll-q">
+            <h4>What's your biggest frustration with your current bag?</h4>
+            <textarea name="frustration" placeholder="Tell us what's not working..."></textarea>
+          </div>
+
+          <div class="poll-q">
+            <h4>How much would you expect to pay?</h4>
+            <div class="poll-options grid2" data-group="price">
+              <label class="poll-opt"><input type="radio" name="price" value="₹1500–2000"> ₹1500–2000</label>
+              <label class="poll-opt"><input type="radio" name="price" value="₹2000–3000"> ₹2000–3000</label>
+              <label class="poll-opt"><input type="radio" name="price" value="₹3000–4000"> ₹3000–4000</label>
+              <label class="poll-opt"><input type="radio" name="price" value="₹4000+"> ₹4000+</label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="margin-top:10px;">Submit Answers</button>
+          <div class="form-msg" id="pollMsg"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- COUNTERS -->
+  <section id="community">
+    <div class="wrap">
+      <div class="reveal">
+        <div class="eyebrow">Building in public</div>
+        <h2 class="section-title">A community forming before day one.</h2>
+      </div>
+      <div class="counter-grid reveal reveal-delay-1">
+        <div class="counter-cell"><b class="mono" data-counter="waitlist">0</b><span>Waitlist Members</span></div>
+        <div class="counter-cell"><b class="mono" data-counter="survey">0</b><span>Survey Responses</span></div>
+        <div class="counter-cell"><b class="mono" data-counter="countries">0</b><span>Countries</span></div>
+        <div class="counter-cell"><b class="mono" id="protoVersion">V1</b><span>Prototype Version</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TIMELINE -->
+  <section id="roadmap">
+    <div class="wrap">
+      <div class="reveal">
+        <div class="eyebrow">Roadmap · 2026</div>
+        <h2 class="section-title">From first sketch to launch.</h2>
+      </div>
+      <div class="timeline">
+        <div class="tl-item active reveal reveal-delay-1">
+          <div class="tl-year">Q1</div>
+          <div class="tl-marker"><div class="tl-dot"></div><div class="tl-line"></div></div>
+          <div class="tl-content"><h4>Research</h4><p>Studying how creators pack, protect and travel with gear.</p></div>
+        </div>
+        <div class="tl-item active reveal reveal-delay-2">
+          <div class="tl-year">Q2</div>
+          <div class="tl-marker"><div class="tl-dot"></div><div class="tl-line"></div></div>
+          <div class="tl-content"><h4>Prototype V1</h4><p>First working build, tested against real equipment.</p></div>
+        </div>
+        <div class="tl-item reveal reveal-delay-3">
+          <div class="tl-year">Q3</div>
+          <div class="tl-marker"><div class="tl-dot"></div><div class="tl-line"></div></div>
+          <div class="tl-content"><h4>User Testing</h4><p>Early access testers put AdaptFit through real-world use.</p></div>
+        </div>
+        <div class="tl-item reveal reveal-delay-1">
+          <div class="tl-year">Q4</div>
+          <div class="tl-marker"><div class="tl-dot"></div><div class="tl-line"></div></div>
+          <div class="tl-content"><h4>Iteration</h4><p>Refining fit, materials and pricing from tester feedback.</p></div>
+        </div>
+        <div class="tl-item reveal reveal-delay-2">
+          <div class="tl-year">2027</div>
+          <div class="tl-marker"><div class="tl-dot"></div></div>
+          <div class="tl-content"><h4>Launch</h4><p>AdaptFit ships to the waitlist, first.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="wrap" style="max-width:780px;">
+      <div class="reveal">
+        <div class="eyebrow">FAQ</div>
+        <h2 class="section-title">Good to know.</h2>
+      </div>
+      <div style="margin-top:44px;">
+        <div class="faq-item reveal">
+          <button class="faq-q">What is AdaptFit?<span class="icon"></span></button>
+          <div class="faq-a"><p>AdaptFit is a carry case built to reshape around whatever gear you place inside it — cameras, drones, gimbals, laptops and more — without custom foam or multiple bags.</p></div>
+        </div>
+        <div class="faq-item reveal">
+          <button class="faq-q">When will it launch?<span class="icon"></span></button>
+          <div class="faq-a"><p>We're currently in the research and prototyping phase, targeting a full launch in 2027. Waitlist members get access first.</p></div>
+        </div>
+        <div class="faq-item reveal">
+          <button class="faq-q">Can I become an early tester?<span class="icon"></span></button>
+          <div class="faq-a"><p>Yes — check "I'd love to test the prototype" when you join the waitlist and we'll reach out as testing slots open.</p></div>
+        </div>
+        <div class="faq-item reveal">
+          <button class="faq-q">How do I stay updated?<span class="icon"></span></button>
+          <div class="faq-a"><p>Join the waitlist for email updates, and follow along on Instagram for behind-the-build content as we go.</p></div>
+        </div>
+        <div class="faq-item reveal">
+          <button class="faq-q">Will there be multiple products?<span class="icon"></span></button>
+          <div class="faq-a"><p>Yes. AdaptFit is the first product in a wider family of adaptive carry gear, including a carry-on, a backpack and a hard case.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <div>
+        <a href="#top" class="logo"><span class="dot"></span>AdaptFit</a>
+        <p class="footer-tag">Building the future of adaptive carrying — one bag for any gear, any shape.</p>
+      </div>
+      <div class="social-list">
+        <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg></a>
+        <a href="#" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 10v7M7 7v.01M11 17v-4.5a2.5 2.5 0 015 0V17"/></svg></a>
+        <a href="#" aria-label="YouTube"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M11 10l4 2-4 2z"/></svg></a>
+        <a href="mailto:hello@adaptfit.com" aria-label="Email"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 AdaptFit. Patent pending.</p>
+      <p>Built from Tirupati, India.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  // ---------- Supabase Client Initialization ----------
+  const supabaseUrl = window.SUPABASE_CONFIG?.url || '';
+  const supabaseAnonKey = window.SUPABASE_CONFIG?.anonKey || '';
+  const { createClient } = window.supabase || {};
+  const supabase = createClient ? createClient(supabaseUrl, supabaseAnonKey) : null;
+
+  // ---------- Loader ----------
+  window.addEventListener('load', ()=>{
+    setTimeout(()=>document.getElementById('loader').classList.add('hide'), 350);
+  });
+
+  // ---------- Header + scroll progress ----------
+  const header = document.getElementById('siteHeader');
+  const progress = document.getElementById('progress');
+  window.addEventListener('scroll', ()=>{
+    header.classList.toggle('scrolled', window.scrollY > 30);
+    const h = document.documentElement;
+    const pct = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+    progress.style.width = pct + '%';
+  });
+
+  // ---------- Mouse glow ----------
+  const glow = document.getElementById('glow');
+  document.addEventListener('mousemove', (e)=>{
+    glow.style.opacity = '1';
+    glow.style.left = e.clientX + 'px';
+    glow.style.top = e.clientY + 'px';
+  });
+  document.addEventListener('mouseleave', ()=> glow.style.opacity = '0');
+
+  // ---------- Reveal on scroll ----------
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); }
+    });
+  }, {threshold:0.15});
+  revealEls.forEach(el=>io.observe(el));
+
+  // ---------- FAQ accordion ----------
+  document.querySelectorAll('.faq-item').forEach(item=>{
+    const q = item.querySelector('.faq-q');
+    const a = item.querySelector('.faq-a');
+    q.addEventListener('click', ()=>{
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(o=>{
+        o.classList.remove('open');
+        o.querySelector('.faq-a').style.maxHeight = null;
+      });
+      if(!isOpen){
+        item.classList.add('open');
+        a.style.maxHeight = a.scrollHeight + 'px';
+      }
+    });
+  });
+
+  // ---------- Poll option highlight ----------
+  document.querySelectorAll('.poll-opt').forEach(opt=>{
+    const input = opt.querySelector('input');
+    input.addEventListener('change', ()=>{
+      if(input.type === 'radio'){
+        document.querySelectorAll(`input[name="${input.name}"]`).forEach(i=>{
+          i.closest('.poll-opt').classList.toggle('checked', i.checked);
+        });
+      } else {
+        opt.classList.toggle('checked', input.checked);
+      }
+    });
+  });
+
+  // ---------- Pin-grid canvas (signature visual) ----------
+  const canvas = document.getElementById('pinCanvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, dots = [];
+  const SPACING = 26;
+  let mouse = {x:-9999, y:-9999};
+
+  function buildGrid(){
+    const rect = canvas.parentElement.getBoundingClientRect();
+    W = canvas.width = rect.width;
+    H = canvas.height = rect.height;
+    dots = [];
+    const cols = Math.ceil(W / SPACING) + 2;
+    const rows = Math.ceil(H / SPACING) + 2;
+    for(let r=0; r<rows; r++){
+      for(let c=0; c<cols; c++){
+        dots.push({
+          ox: c*SPACING, oy: r*SPACING,
+          x: c*SPACING, y: r*SPACING,
+          vx:0, vy:0
+        });
+      }
+    }
+  }
+  buildGrid();
+  window.addEventListener('resize', buildGrid);
+  canvas.parentElement.addEventListener('mousemove', (e)=>{
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - rect.left;
+    mouse.y = e.clientY - rect.top;
+  });
+  canvas.parentElement.addEventListener('mouseleave', ()=>{ mouse.x=-9999; mouse.y=-9999; });
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function animateGrid(){
+    ctx.clearRect(0,0,W,H);
+    const radius = 130;
+    for(const d of dots){
+      const dx = d.ox - mouse.x;
+      const dy = d.oy - mouse.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      let tx = d.ox, ty = d.oy;
+      if(dist < radius){
+        const force = (1 - dist/radius);
+        const push = force * 14;
+        const angle = Math.atan2(dy, dx);
+        tx = d.ox + Math.cos(angle) * push;
+        ty = d.oy + Math.sin(angle) * push;
+      }
+      d.x += (tx - d.x) * 0.14;
+      d.y += (ty - d.y) * 0.14;
+      const dGlow = dist < radius ? (1-dist/radius) : 0;
+      const size = 1.4 + dGlow * 1.6;
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, size, 0, Math.PI*2);
+      ctx.fillStyle = dGlow > 0.05 ? `rgba(111,141,255,${0.25 + dGlow*0.6})` : 'rgba(139,143,154,0.22)';
+      ctx.fill();
+    }
+    if(!reduceMotion) requestAnimationFrame(animateGrid);
+  }
+  animateGrid();
+
+  // ---------- Product placeholder dot shapes ----------
+  const shapes = {
+    case: [[10,10],[30,10],[50,10],[70,10],[90,10],[110,10],[10,40],[110,40],[10,70],[30,70],[50,70],[70,70],[90,70],[110,70]],
+    pack: [[20,5],[40,5],[60,5],[80,5],[100,5],[15,35],[105,35],[15,65],[105,65],[20,85],[40,85],[60,85],[80,85],[100,85]],
+    hard: [[15,15],[60,5],[105,15],[10,45],[60,45],[110,45],[15,75],[60,85],[105,75]]
+  };
+  document.querySelectorAll('.dot-shape').forEach(el=>{
+    const key = el.dataset.shape;
+    (shapes[key]||[]).forEach(([x,y])=>{
+      const i = document.createElement('i');
+      i.style.left = x+'px'; i.style.top = y+'px';
+      el.appendChild(i);
+    });
+  });
+
+  function countUp(el, target){
+    const start = 0, dur = 1200, startTime = performance.now();
+    function step(t){
+      const p = Math.min((t-startTime)/dur, 1);
+      const eased = 1 - Math.pow(1-p, 3);
+      el.textContent = Math.round(start + (target-start)*eased).toLocaleString();
+      if(p<1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  async function refreshCounters(){
+    let waitlistCount = 0;
+    let surveyCount = 0;
+    let countryCount = 0;
+
+    if (supabase) {
+      try {
+        // Try requesting via security definer RPC function first for high security
+        const { data, error } = await supabase.rpc('get_waitlist_stats');
+        if (!error && data) {
+          waitlistCount = data.members || 0;
+          surveyCount = data.polls || 0;
+          countryCount = data.countries || 0;
+        } else {
+          console.warn("RPC function get_waitlist_stats failed, using direct queries as fallback:", error);
+          
+          // Fallback to direct queries if RPC is not deployed yet
+          const { count: wCount, error: wErr } = await supabase
+            .from('waitlist')
+            .select('*', { count: 'exact', head: true });
+          
+          const { count: pCount, error: pErr } = await supabase
+            .from('polls')
+            .select('*', { count: 'exact', head: true });
+
+          const { data: cData, error: cErr } = await supabase
+            .from('waitlist')
+            .select('country');
+
+          if (!wErr) waitlistCount = wCount || 0;
+          if (!pErr) surveyCount = pCount || 0;
+          if (!cErr && cData) {
+            const countries = new Set(cData.map(r => r.country?.trim().toLowerCase()).filter(Boolean));
+            countryCount = countries.size;
+          }
+        }
+      } catch (e) {
+        console.error("Error fetching database counters:", e);
+      }
+    }
+
+    document.querySelectorAll('[data-counter="waitlist"]').forEach(el=>countUp(el, waitlistCount));
+    document.querySelectorAll('[data-counter="survey"]').forEach(el=>countUp(el, surveyCount));
+    document.querySelectorAll('[data-counter="countries"]').forEach(el=>countUp(el, countryCount));
+    const sw = document.getElementById('statWaitlist'); if(sw) sw.textContent = waitlistCount.toLocaleString();
+    const sc = document.getElementById('statCountries'); if(sc) sc.textContent = countryCount.toLocaleString();
+  }
+
+  const countersSection = document.getElementById('community');
+  let countersLoaded = false;
+  const cIO = new IntersectionObserver((entries)=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting && !countersLoaded){
+        countersLoaded = true;
+        refreshCounters();
+      }
+    });
+  }, {threshold:0.3});
+  if(countersSection) cIO.observe(countersSection);
+  refreshCounters();
+
+  // ---------- Waitlist form ----------
+  const wForm = document.getElementById('waitlistForm');
+  const wMsg = document.getElementById('wfMsg');
+  wForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const fd = new FormData(wForm);
+    const name = fd.get('name').trim();
+    const email = fd.get('email').trim();
+    const country = fd.get('country').trim();
+    const profession = (fd.get('profession')||'').trim();
+    const testInterest = !!fd.get('testInterest');
+
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if(!name || !country || !emailOk){
+      wMsg.textContent = 'Please fill in a valid name, email and country.';
+      wMsg.className = 'form-msg error';
+      return;
+    }
+
+    if (!supabase) {
+      wMsg.textContent = 'Database configuration is missing. Please set up config.js.';
+      wMsg.className = 'form-msg error';
+      return;
+    }
+
+    const submitBtn = wForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Joining...';
+
+    try{
+      const { error } = await supabase
+        .from('waitlist')
+        .insert([{
+          name,
+          email,
+          country,
+          profession,
+          test_interest: testInterest
+        }]);
+
+      if(error) throw error;
+      
+      wForm.style.display = 'none';
+      document.getElementById('wfSuccess').classList.add('show');
+      refreshCounters();
+    }catch(err){
+      console.error("Waitlist submit error:", err);
+      wMsg.textContent = 'Something went wrong saving your entry — please try again.';
+      wMsg.className = 'form-msg error';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Join Waitlist';
+    }
+  });
+
+  // ---------- Poll form ----------
+  const pForm = document.getElementById('pollForm');
+  const pMsg = document.getElementById('pollMsg');
+  pForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const fd = new FormData(pForm);
+    const intent = fd.get('intent');
+    const price = fd.get('price');
+    const carry = fd.getAll('carry');
+    const frustration = (fd.get('frustration')||'').trim();
+
+    if(!intent || !price){
+      pMsg.textContent = 'Please answer the preorder and pricing questions.';
+      pMsg.className = 'form-msg error';
+      return;
+    }
+
+    if (!supabase) {
+      pMsg.textContent = 'Database configuration is missing. Please set up config.js.';
+      pMsg.className = 'form-msg error';
+      return;
+    }
+
+    const submitBtn = pForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+
+    try{
+      const { error } = await supabase
+        .from('polls')
+        .insert([{
+          intent,
+          carry,
+          frustration,
+          price
+        }]);
+
+      if(error) throw error;
+
+      pMsg.textContent = 'Thanks — your answers help shape what we build next.';
+      pMsg.className = 'form-msg ok';
+      submitBtn.textContent = 'Answers Submitted';
+      refreshCounters();
+    }catch(err){
+      console.error("Poll submit error:", err);
+      pMsg.textContent = 'Something went wrong saving your answers — please try again.';
+      pMsg.className = 'form-msg error';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Answers';
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
