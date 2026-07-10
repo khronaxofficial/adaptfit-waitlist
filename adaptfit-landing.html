@@ -378,7 +378,6 @@
     *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
   }
 </style>
-<script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -766,12 +765,23 @@
 </footer>
 
 <script>
-(function(){
+async function initApp() {
   // ---------- Supabase Client Initialization ----------
-  const supabaseUrl = window.SUPABASE_CONFIG?.url || '';
-  const supabaseAnonKey = window.SUPABASE_CONFIG?.anonKey || '';
-  const { createClient } = window.supabase || {};
-  const supabase = createClient ? createClient(supabaseUrl, supabaseAnonKey) : null;
+  // Fetch config securely from the server (works both locally and on Vercel)
+  let supabase = null;
+  try {
+    const configSrc = window.SUPABASE_CONFIG
+      ? window.SUPABASE_CONFIG                          // local config.js fallback
+      : await fetch('/api/config').then(r => r.json()); // Vercel env vars
+    const { createClient } = window.supabase || {};
+    if (createClient && configSrc.url && configSrc.anonKey) {
+      supabase = createClient(configSrc.url, configSrc.anonKey);
+    }
+  } catch(e) {
+    console.warn('Could not load Supabase config:', e);
+  }
+
+(function(supabase){
 
   // ---------- Loader ----------
   window.addEventListener('load', ()=>{
@@ -1092,7 +1102,9 @@
     }
   });
 
-})();
+})(supabase);
+}
+initApp();
 </script>
 </body>
 </html>

@@ -154,7 +154,6 @@
   ::-webkit-scrollbar-track { background: var(--void); }
   ::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: 10px; }
 </style>
-<script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -255,11 +254,22 @@
   </div>
 
 <script>
-(function() {
-  const supabaseUrl = window.SUPABASE_CONFIG?.url || '';
-  const supabaseAnonKey = window.SUPABASE_CONFIG?.anonKey || '';
-  const { createClient } = window.supabase || {};
-  const supabase = createClient ? createClient(supabaseUrl, supabaseAnonKey) : null;
+async function initAdmin() {
+  // Load config from /api/config (Vercel env vars) or local config.js fallback
+  let supabase = null;
+  try {
+    const configSrc = window.SUPABASE_CONFIG
+      ? window.SUPABASE_CONFIG
+      : await fetch('/api/config').then(r => r.json());
+    const { createClient } = window.supabase || {};
+    if (createClient && configSrc.url && configSrc.anonKey) {
+      supabase = createClient(configSrc.url, configSrc.anonKey);
+    }
+  } catch(e) {
+    console.warn('Could not load Supabase config:', e);
+  }
+
+(function(supabase) {
 
   // DOM Elements
   const loginScreen = document.getElementById('loginScreen');
@@ -557,7 +567,9 @@
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
   }
 
-})();
+})(supabase);
+}
+initAdmin();
 </script>
 </body>
 </html>
